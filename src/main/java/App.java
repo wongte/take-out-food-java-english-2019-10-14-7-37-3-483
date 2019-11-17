@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.List;
 
 /*
@@ -13,8 +14,33 @@ public class App {
     }
 
     public String bestCharge(List<String> inputs) {
-        //TODO: write code here
-
-        return null;
+        String outputResult = "============= Order details =============\n";
+        ArrayList<Order> orders = new ArrayList<Order>();
+        List<Item> items = itemRepository.findAll();
+        for (String input : inputs) {
+            String[] orderStr = input.split(" x ");
+            Order order = new Order(orderStr[0], Integer.parseInt(orderStr[1]));
+            orders.add(order);
+            for (Item item : items) {
+                if (item.getId().equals(order.getItemId())) {
+                    order.setItem(item);
+                    outputResult += item.getName() + " x " + order.getQty() + " = " + String.format("%.0f", item.getPrice() * order.getQty()) + " yuan\n";
+                    break;
+                }
+            }
+        }
+        outputResult += "-----------------------------------\n";
+        PromotionChecker checker = new PromotionChecker(orders, salesPromotionRepository.findAll());
+        boolean hasPromotion = checker.check();
+        if (hasPromotion) {
+            outputResult += "Promotion used:\n" + checker.getConsoleOutput() + "\n-----------------------------------\n";
+        }
+        double total = 0;
+        for (Order o : orders) {
+            total += (o.getItem().getPrice()) * o.getQty();
+        }
+        outputResult += "Total:" + String.format("%.0f", total - checker.getSaved()) + " yuan\n";
+        outputResult += "===================================";
+        return outputResult;
     }
 }
